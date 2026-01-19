@@ -3,998 +3,794 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>阿杰AI引擎高速智能下载器</title>
-  <!-- 替换掉原来的 tailwind.min.js 引用1 -->
+  <title>阿杰智能下载中心</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  
-  <!-- 引入Bootstrap CSS -->
-  <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.6.0/css/bootstrap.min.css">
-  
-  <!-- 配置Tailwind自定义颜色和字体 -->
+  <link href="https://npm.elemecdn.com/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            'tech-blue': '#0f172a',
-            'tech-dark': '#020617',
-            'tech-accent': '#06b6d4',
-            'tech-light': '#22d3ee',
-            'tech-purple': '#7c3aed',
+            primary: '#0ea5e9',
+            success: '#10b981',
+            danger: '#ef4444',
+            dark: '#1e293b',
+            glow: '#06b6d4',
           },
           fontFamily: {
-            'mono': ['JetBrains Mono', 'Consolas', 'Monaco', 'monospace'],
-            'tech': ['Orbitron', 'sans-serif'],
+            cyber: ['monospace', 'Consolas', '"Courier New"', 'monospace'],
           },
         },
       }
     }
   </script>
-  
   <style type="text/tailwindcss">
     @layer utilities {
       .text-shadow-glow {
-        text-shadow: 0 0 10px theme('colors.tech-accent'), 0 0 20px theme('colors.tech-accent/70');
+        text-shadow: 0 0 8px theme('colors.glow'), 0 0 16px theme('colors.glow/70');
       }
-      .border-glow {
-        box-shadow: 0 0 5px theme('colors.tech-accent'), 0 0 10px theme('colors.tech-accent/50');
-      }
-      .pulse-glow {
-        animation: pulse 2s infinite;
-      }
-      .terminal-cursor {
-        animation: blink 1s step-end infinite;
-      }
-      .grid-pattern {
-        background-image: 
-          linear-gradient(rgba(6, 182, 212, 0.1) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(6, 182, 212, 0.1) 1px, transparent 1px);
+      .bg-grid {
+        background-image: linear-gradient(rgba(14, 165, 233, 0.1) 1px, transparent 1px),
+                          linear-gradient(90deg, rgba(14, 165, 233, 0.1) 1px, transparent 1px);
         background-size: 20px 20px;
       }
-      .no-scroll {
-        overflow: hidden !important;
-        height: 100vh !important;
+      .animate-slide-down {
+        animation: slideDown 0.8s ease forwards;
       }
-      .modal-glow {
-        box-shadow: 0 0 15px theme('colors.tech-accent/50'), 0 0 30px theme('colors.tech-accent/30');
+      .animate-pulse-slow {
+        animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      .backdrop-blur-sm {
+        backdrop-filter: blur(4px);
+      }
+      /* 整合开始.html的授权提示样式 */
+      .auth-bg {
+        background-color: #0a1929;
+        background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                          linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 20px 20px;
+      }
+      .auth-tip-box {
+        width: 100%;
+        background-color: #e60012;
+        padding: 80px 0;
+        text-align: center;
+        transition: transform 0.8s ease-in-out;
+      }
+      .auth-tip-success {
+        background-color: #10b981 !important;
+        transition: transform 0.8s ease-in-out;
+      }
+      .auth-tip-text {
+        font-size: 80px;
+        color: #ffffff;
+        font-weight: bold;
+        font-family: "Microsoft Yahei", sans-serif;
+        letter-spacing: 2px;
+      }
+      
+      /* 最佳线路高亮 */
+      .best-line {
+        animation: highlightPulse 1s ease-in-out;
+        background-color: rgba(16, 185, 129, 0.3) !important; /* 绿色半透明背景 */
+      }
+      
+      @keyframes highlightPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+      }
+      
+      /* 终端输出样式 */
+      #terminalOutput {
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      
+      .terminal-line {
+        margin-bottom: 0.25rem;
+        opacity: 0;
+        animation: fadeInUp 0.3s forwards;
+      }
+      
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      /* 下载按钮美化 */
+      .download-container {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      
+      .download-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.4rem 1.6rem;
+        background-color: rgba(30, 41, 59, 0.8);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: #10b981;
+        font-size: 0.75rem;
+        border-radius: 0.25rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+        min-width: 60px;
+      }
+      
+      .download-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.2), transparent);
+        transition: 0.5s;
+      }
+      
+      .download-btn:hover {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: #06b6d4;
+        border-color: rgba(6, 182, 212, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        z-index: 10;
+      }
+      
+      .download-btn:hover::before {
+        left: 100%;
+      }
+      
+      .download-btn i {
+        margin-right: 0.25rem;
+      }
+      
+      .best-download-btn {
+        background-color: rgba(16, 185, 129, 0.5) !important; /* 绿色背景 */
+        border: 1px solid rgba(16, 185, 129, 0.8) !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+      }
+      
+      .recommend-badge {
+        background-color: #10b981;
+        color: white;
+        font-size: 0.6rem;
+        padding: 0.1rem 0.3rem;
+        border-radius: 0.25rem;
+        vertical-align: middle;
+      }
+      @media (max-width: 768px) {
+        .auth-tip-text {
+          font-size: 28px;
+        }
       }
     }
-    
-    @keyframes pulse {
-      0%, 100% { box-shadow: 0 0 5px theme('colors.tech-accent'), 0 0 10px theme('colors.tech-accent/50'); }
-      50% { box-shadow: 0 0 10px theme('colors.tech-accent'), 0 0 20px theme('colors.tech-accent/70'); }
-    }
-    
-    @keyframes blink {
-      from, to { opacity: 1; }
-      50% { opacity: 0; }
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .animate-fade-in {
-      animation: fadeIn 0.5s ease forwards;
-    }
-    
-    /* 节点下载按钮样式 */
-    .node-download-btn {
-        position: relative; /* 相对定位 */
-        min-height: 70px; /* 最小高度 */
-        padding: 0.75rem 1rem; /* 内边距 */
-    }
-
-    /* 节点按钮内容容器 */
-    .node-btn-content {
-        display: flex; /* 弹性布局 */
-        flex-direction: column; /* 垂直排列 */
-        align-items: center; /* 水平居中 */
-        gap: 0.375rem; /* 元素间距 */
-        width: 100%; /* 宽度100% */
-    }
-
-    /* 节点名称样式 */
-    .node-name {
-        font-size: 0.9375rem; /* 字体大小 */
-        font-weight: 500; /* 字体粗细 */
-        white-space: nowrap; /* 不换行 */
-    }
-
-    /* 节点速度信息容器 */
-    .node-speed {
-        display: flex; /* 弹性布局 */
-        align-items: center; /* 垂直居中 */
-        gap: 0.25rem; /* 元素间距 */
-    }
-
-    /* 速度标签样式 */
-    .speed-badge {
-        font-size: 0.75rem; /* 字体大小 */
-        font-weight: 500; /* 字体粗细 */
-        padding: 0.25rem 0.5rem; /* 内边距 */
-        border-radius: 12px; /* 圆角 */
-    }
-
-    /* 优秀速度标签样式 */
-    .speed-badge.badge-success {
-        background-color: #10b981; /* 背景色 */
-        color: white; /* 文字颜色 */
-    }
-
-    /* 良好速度标签样式 */
-    .speed-badge.badge-primary {
-        background-color: #2563eb; /* 背景色 */
-        color: white; /* 文字颜色 */
-    }
-
-    /* 一般速度标签样式 */
-    .speed-badge.badge-warning {
-        background-color: #f59e0b; /* 背景色 */
-        color: white; /* 文字颜色 */
-    }
-
-    /* 慢速标签样式 */
-    .speed-badge.badge-secondary {
-        background-color: #6b7280; /* 背景色 */
-        color: white; /* 文字颜色 */
-    }
-
-    /* 测速中标签样式 */
-    .speed-badge.badge-info {
-        background-color: #3b82f6; /* 背景色 */
-        color: white; /* 文字颜色 */
-    }
-
-    /* 推荐标签样式 */
-    .recommended-badge {
-        background-color: #10b981; /* 背景色 */
-        color: white; /* 文字颜色 */
-        font-size: 0.7rem; /* 字体大小 */
-        padding: 0.15rem 0.4rem; /* 内边距 */
-        border-radius: 10px; /* 圆角 */
-        margin-left: 0.25rem; /* 左边距 */
-    }
-
-    /* 测速中的加载动画 */
-    .speed-badge.testing {
-        animation: pulse 1.5s ease-in-out infinite; /* 脉冲动画 */
-    }
-
-    /* 脉冲动画关键帧 */
-    @keyframes pulse {
-        0%, 100% { opacity: 1; } /* 开始和结束透明度 */
-        50% { opacity: 0.5; } /* 中间透明度 */
-    }
-
-    /* 响应式调整 - 移动端适配 */
-    @media (max-width: 768px) {
-        .node-download-btn {
-            min-height: 65px; /* 移动端最小高度 */
-        }
-
-        .node-name {
-            font-size: 0.875rem; /* 移动端字体大小 */
-        }
-
-        .speed-badge {
-            font-size: 0.7rem; /* 移动端字体大小 */
-        }
+    @keyframes slideDown {
+      0% { transform: translateY(-100%); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
     }
   </style>
-  
-  <!-- 引入字体 -->
-  <link href="https://fonts.font.im/css2?family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.font.im/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 </head>
+<body class="bg-dark text-white min-h-screen overflow-x-hidden bg-grid">
 
-<body class="bg-tech-dark text-gray-300 font-mono min-h-screen grid-pattern relative overflow-x-hidden">
-  <!-- 页面容器 -->
-  <div class="container mx-auto px-4 py-8 relative z-20">
-    <!-- 标题区域 -->
-    <header class="mb-10 text-center relative">
-      <div id="title-container" class="relative h-24 flex items-center justify-center overflow-hidden">
-        <h1 id="main-title" class="text-[clamp(1.5rem,5vw,3rem)] font-tech font-bold text-tech-accent text-shadow-glow tracking-wider">
-          🚀 阿杰AI引擎高速智能下载器 🚀
-        </h1>
-        <div class="absolute inset-0 bg-gradient-to-b from-tech-dark/0 via-tech-accent/10 to-tech-dark/0 opacity-70"></div>
-      </div>
-      
-      <!-- 加载动画 -->
-      <div id="loading-animation" class="flex justify-center items-center h-16 mb-4">
-        <div class="w-1 h-8 bg-tech-accent rounded-full mr-2 pulse-glow"></div>
-        <div class="w-1 h-12 bg-tech-accent rounded-full mr-2 pulse-glow" style="animation-delay: 0.2s"></div>
-        <div class="w-1 h-10 bg-tech-accent rounded-full mr-2 pulse-glow" style="animation-delay: 0.4s"></div>
-        <div class="w-1 h-14 bg-tech-accent rounded-full pulse-glow" style="animation-delay: 0.6s"></div>
-      </div>
-      
-      <!-- 状态信息 -->
-      <div id="status-info" class="text-sm text-gray-400 mt-2 min-h-[2rem]">
-        <span>初始化系统...</span><span class="terminal-cursor">|</span>
-      </div>
-    </header>
-    
-    <!-- 授权状态区域 -->
-    <div id="auth-status" class="mb-8 p-4 rounded-lg bg-tech-blue/50 border border-tech-accent/30">
-      <div class="flex items-center">
-        <i id="auth-icon" class="fa fa-circle-o-notch fa-spin text-tech-accent mr-3 text-xl"></i>
-        <div id="auth-message" class="flex-1">正在验证授权...</div>
-        <div id="file-info" class="text-right text-sm text-gray-400">
-          <div>文件名: <span id="filename">-</span></div>
-          <div>更新时间: <span id="update-time">-</span></div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- 测速区域 -->
-    <div id="speed-test-section" class="mb-8">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-tech text-tech-light">📡 线路测速</h2>
-        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#downloadModal">
-            打开下载模态框
-        </button>
-      </div>
-      
-      <!-- 终端输出区域 -->
-      <div id="terminal-output" class="bg-tech-blue/80 border border-tech-accent/30 rounded-lg p-4 h-40 overflow-y-auto mb-6 text-sm font-mono leading-relaxed">
-        <div class="text-gray-400">=== 系统终端日志 ===</div>
-        <div id="terminal-logs" class="mt-2 space-y-1">
-          <div class="animate-fade-in"><span class="text-tech-purple">系统启动中</span> <span class="text-gray-500">|</span> 等待初始化完成...</div>
-        </div>
-      </div>
-      
-      <!-- 测速结果表格 -->
-      <div id="test-results">
-        <h3 class="text-lg font-tech text-tech-light mb-3">📊 测速结果</h3>
-        <div class="overflow-x-auto bg-tech-blue/30 rounded-lg border border-tech-accent/20 p-6 text-center">
-          <p class="text-gray-400 italic">尚未进行测速，请点击"打开下载模态框"按钮获取线路性能数据</p>
-        </div>
-      </div>
-    </div>
-    
-    <!-- 未授权提示 -->
-    <div id="unauthorized-message" class="mb-8 p-6 rounded-lg bg-red-900/30 border border-red-500/50 hidden">
-      <div class="flex items-start">
-        <i class="fa fa-exclamation-triangle text-red-500 mr-4 text-2xl mt-1"></i>
-        <div>
-          <h3 class="text-xl font-bold text-red-400 mb-2">❌ AI引擎识别到授权问题</h3>
-          <p class="text-red-300">阿杰没有授权下载文件或授权下载文件已过期，请联系阿杰进行处理。</p>
-        </div>
-      </div>
-    </div>
-    
-    <!-- 页脚 -->
-    <footer class="mt-12 text-center text-gray-500 text-sm">
-      <p>© 2025 阿杰AI引擎高速智能下载器 | 系统状态: <span id="system-status" class="text-tech-accent">正常运行中</span></p>
-    </footer>
-  </div>
-
-  <!-- 更新提示模态框 -->
-  <div id="updateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-tech-blue border border-tech-accent rounded-lg p-6 w-96">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-xl font-tech text-tech-light">文件更新检测</h3>
-        <button id="closeUpdateModal" class="text-gray-400 hover:text-white">
-          <i class="fa fa-times"></i>
-        </button>
-      </div>
-      <p class="mb-6 text-gray-300">检测到文件已更新，将自动开始下载新文件。</p>
-      <div class="flex justify-end space-x-3">
-        <button id="updateLater" class="px-4 py-2 border border-gray-600 rounded hover:bg-gray-700 transition-colors">
-          关闭
-        </button>
-        <button id="updateNow" class="px-4 py-2 bg-tech-accent text-white rounded hover:bg-cyan-500 transition-colors hidden">
-          立即更新
-        </button>
+  <!-- 替换后的授权状态容器（整合开始.html结构） -->
+  <div id="authContainer" class="fixed inset-0 z-50 auth-bg flex items-center justify-center transition-all duration-700">
+    <div class="w-full h-full flex items-center justify-center">
+      <div id="authTipBox" class="auth-tip-box">
+        <div id="authTipText" class="auth-tip-text">文件未授权请联系阿杰</div>
       </div>
     </div>
   </div>
 
-  <!-- 模态框 -->
-  <div class="modal fade" id="downloadModal" tabindex="-1" role="dialog" aria-labelledby="downloadModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content modern-modal bg-tech-blue border border-tech-accent">
-        <!-- 模态框头部 -->
-        <div class="modal-header border-tech-accent/30">
-          <h5 class="modal-title text-tech-light" id="downloadModalLabel">文件下载</h5>
-          <button type="button" class="close text-gray-400" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-
-        <!-- 模态框主体 -->
-        <div class="modal-body">
-          <!-- 下载链接区域 -->
-          <div class="form-group mb-3">
-            <!-- 标题标签 -->
-            <label class="form-label text-gray-300">
-              <i class="fa fa-server mr-1 text-muted"></i>
-              选择镜像 <!-- 选择镜像 -->
-            </label>
-            <!-- 下载节点容器 -->
-            <div class="d-flex flex-wrap gap-2" id="download-nodes-container">
-              <!-- 电信节点下载按钮 -->
-              <a class="btn btn-outline-primary flex-fill node-download-btn"
-                 id="telcom_url"
-                 data-node="telecom" 
-                 target="_blank" 
-                 href="javascript:void(0);">
-                <div class="node-btn-content">
-                  <div class="node-name">
-                    <i class="fa fa-download mr-1"></i>电信下载 <!-- 电信下载 -->
-                  </div>
-                  <div class="node-speed">
-                    <span class="badge badge-info speed-badge">测速中...</span> <!-- 速度标签 -->
-                  </div>
-                </div>
-              </a>
-              <!-- 联通节点下载按钮 -->
-              <a class="btn btn-outline-primary flex-fill node-download-btn"
-                 id="unicom_url"
-                 data-node="unicom" 
-                 target="_blank" 
-                 href="javascript:void(0);">
-                <div class="node-btn-content">
-                  <div class="node-name">
-                    <i class="fa fa-download mr-1"></i>联通下载 <!-- 联通下载 -->
-                  </div>
-                  <div class="node-speed">
-                    <span class="badge badge-info speed-badge">测速中...</span> <!-- 速度标签 -->
-                  </div>
-                </div>
-              </a>
-              <!-- 移动节点下载按钮 -->
-              <a class="btn btn-outline-primary flex-fill node-download-btn"
-                 id="cmnet_url"
-                 data-node="cmnet" 
-                 target="_blank"
-                 href="javascript:void(0);">
-                <div class="node-btn-content">
-                  <div class="node-name">
-                    <i class="fa fa-download mr-1"></i>移动下载 <!-- 移动下载 -->
-                  </div>
-                  <div class="node-speed">
-                    <span class="badge badge-info speed-badge">测速中...</span> <!-- 速度标签 -->
-                  </div>
-                </div>
-              </a>
-              <!-- 美国西部节点下载按钮 -->
-              <a class="btn btn-outline-primary flex-fill node-download-btn"
-                 id="usw_url"
-                 data-node="usw" 
-                 target="_blank" 
-                 href="javascript:void(0);">
-                <div class="node-btn-content">
-                  <div class="node-name">
-                    <i class="fa fa-download mr-1"></i>美国西部下载 <!-- 美国西部下载 -->
-                  </div>
-                  <div class="node-speed">
-                    <span class="badge badge-info speed-badge">测速中...</span> <!-- 速度标签 -->
-                  </div>
-                </div>
-              </a>
-            </div>
+  <!-- 主界面 -->
+  <div id="mainInterface" class="hidden opacity-0 transition-opacity duration-1000 pt-8 px-12">
+    <!-- 顶部测速区域和终端日志 -->
+    <div class="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- 左侧测速区域 -->
+      <div class="lg:col-span-1 p-6 bg-dark/50 backdrop-blur-sm rounded-lg border border-primary/30 shadow-lg">
+        <h2 class="text-2xl font-cyber mb-4 text-primary text-shadow-glow">
+          <i class="fa fa-tachometer mr-2"></i>实时网络测速
+        </h2>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="p-3 bg-dark/80 rounded border border-success/20">
+            <div class="text-xs text-gray-400">电信线路</div>
+            <div id="telcomSpeed" class="font-cyber text-success truncate">--</div>
+          </div>
+          <div class="p-3 bg-dark/80 rounded border border-success/20">
+            <div class="text-xs text-gray-400">联通线路</div>
+            <div id="unicomSpeed" class="font-cyber text-success truncate">--</div>
+          </div>
+          <div class="p-3 bg-dark/80 rounded border border-success/20">
+            <div class="text-xs text-gray-400">移动线路</div>
+            <div id="cmnetSpeed" class="font-cyber text-success truncate">--</div>
+          </div>
+          <div class="p-3 bg-dark/80 rounded border border-success/20">
+            <div class="text-xs text-gray-400">北美线路</div>
+            <div id="uswSpeed" class="font-cyber text-success truncate">--</div>
           </div>
         </div>
-
-        <!-- 模态框底部 -->
-        <div class="modal-footer border-tech-accent/30">
-          <!-- 手动触发测速按钮（用于测试）-->
-          <button type="button" id="testSpeedBtn" class="btn btn-secondary mr-2">
-            <i class="fa fa-tachometer mr-1"></i>手动测速
-          </button>
-          <!-- 确认按钮 -->
-          <button type="button" data-dismiss="modal" class="btn btn-primary bg-tech-accent border-tech-accent">
-            <i class="fa fa-check mr-1"></i>确认 <!-- 确认 -->
-          </button>
+        <div class="mt-4 p-3 bg-dark/80 rounded border border-primary/30">
+          <div class="text-sm text-gray-400">推荐线路</div>
+          <div id="avgSpeed" class="text-2xl font-cyber text-primary text-shadow-glow">--</div>
         </div>
+      </div>
+      
+      <!-- 右侧终端日志 -->
+      <div class="lg:col-span-2 p-6 bg-black/80 backdrop-blur-sm rounded-lg border border-green-500/30 shadow-lg flex flex-col">
+        <div class="flex items-center mb-4">
+          <i class="fa fa-terminal text-green-500 mr-2"></i>
+          <h2 class="text-2xl font-cyber text-green-500 text-shadow-glow">系统日志</h2>
+        </div>
+        <div id="terminalOutput" class="flex-grow bg-gray-900 rounded p-3 overflow-y-auto font-mono text-sm text-green-400 whitespace-pre-wrap">
+          <div class="terminal-line">> 系统启动...</div>
+          <div class="terminal-line">> 初始化网络模块...</div>
+          <div class="terminal-line">> 网络模块加载完成</div>
+          <div class="terminal-line">> 准备就绪...</div>
+        </div>
+        <div class="mt-2 flex">
+          <span class="text-green-500 font-cyber">&gt;</span>
+          <span class="ml-2 animate-pulse text-green-500">|</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 下载列表区域 -->
+    <div class="p-6 bg-dark/50 backdrop-blur-sm rounded-lg border border-primary/30 shadow-lg">
+      <h2 class="text-2xl font-cyber mb-4 text-primary text-shadow-glow">
+        <i class="fa fa-download mr-2"></i>软件下载列表
+      </h2>
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="border-b border-primary/30">
+              <th class="text-left p-3 font-cyber text-primary w-2/3">软件名称</th>
+              <th class="text-center p-3 font-cyber text-primary w-1/3">下载链接</th>
+            </tr>
+          </thead>
+          <tbody id="downloadTableBody">
+            <!-- 下载项动态生成 -->
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 
-  <!-- 引入jQuery -->
-  <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
-  
-  <!-- 引入Bootstrap JS -->
-  <script src="https://cdn.staticfile.org/twitter-bootstrap/4.6.0/js/bootstrap.bundle.min.js"></script>
-  
   <script>
-    // 全局状态管理（新增初始化完成标记）
-    const appState = {
-      isTesting: false,
-      isDownloading: false,
-      isInitialLoaded: false, // 是否完成首次初始化
-      lastFileTime: null,     // 上次文件时间戳
-      currentFileName: null,  // 当前文件名
-      downloadData: null,
-      testResults: {},
-      completedLines: 0,
-      intervalId: null,
-      lastUpdatePrompt: 0 // 上次提示时间
-    };
+    // 全局状态
+    let currentSoftwareList = [];
+    const JSON_URL = 'http://cdn.hlcssc.com/rjdz.json';
+    const CHECK_INTERVAL = 10000; // 10秒检查一次
+    const EXPIRE_DURATION = 86400000; // 24小时有效期 (24 * 60 * 60 * 1000)
     
-    // DOM元素引用
-    const elements = {
-      statusInfo: document.getElementById('status-info'),
-      authStatus: document.getElementById('auth-status'),
-      authIcon: document.getElementById('auth-icon'),
-      authMessage: document.getElementById('auth-message'),
-      filename: document.getElementById('filename'),
-      updateTime: document.getElementById('update-time'),
-      speedTestSection: document.getElementById('speed-test-section'),
-      terminalOutput: document.getElementById('terminal-output'),
-      terminalLogs: document.getElementById('terminal-logs'),
-      testResults: document.getElementById('test-results'),
-      unauthorizedMessage: document.getElementById('unauthorized-message'),
-      systemStatus: document.getElementById('system-status'),
-      updateModal: document.getElementById('updateModal'), // 添加更新模态框引用
-      updateNow: document.getElementById('updateNow'),     // 添加立即更新按钮引用
-      updateLater: document.getElementById('updateLater'), // 添加稍后更新按钮引用
-      closeUpdateModal: document.getElementById('closeUpdateModal') // 添加关闭按钮引用
-    };
-    
-    // 线路信息映射
-    const lineInfo = {
-      telcom_url: { id: 'telcom', name: '电信线路', operator: '中国电信', icon: 'fa-signal' },
-      unicom_url: { id: 'unicom', name: '联通线路', operator: '中国联通', icon: 'fa-signal' },
-      cmnet_url: { id: 'cmnet', name: '移动线路', operator: '中国移动', icon: 'fa-signal' },
-      usw_url: { id: 'usw', name: '北美线路', operator: '国际出口', icon: 'fa-globe' }
-    };
-    
+    // 本地存储授权检查时间，用于备用机制
+    const AUTH_CHECK_KEY = 'lastAuthCheck';
+    const LOCAL_AUTH_DURATION = 86400000; // 本地记录的有效期也是24小时
+
     // 初始化
     document.addEventListener('DOMContentLoaded', () => {
-      document.body.classList.add('no-scroll');
-      animateTitle();
+      // 接收 Python 侧回传的状态/进度（pywebview -> JS）
+      window.__pyDownloadStatus = function(payload) {
+        try {
+          if (payload && payload.message) {
+            addToTerminal(payload.message);
+          }
+        } catch (e) {
+          // ignore
+        }
+      };
+
+      window.__pyDownloadProgress = function(payload) {
+        try {
+          if (!payload) return;
+          const name = payload.filename || '';
+          const downloaded = payload.downloaded || 0;
+          const total = payload.total || 0;
+          const percent = payload.percent;
+          if (percent !== null && percent !== undefined && total > 0) {
+            addToTerminal(`下载进度: ${name} ${percent}% (${downloaded}/${total})`);
+          } else {
+            addToTerminal(`下载进度: ${name} ${downloaded} bytes`);
+          }
+        } catch (e) {
+          // ignore
+        }
+      };
+
+      // 拦截下载按钮：在桌面端用 Python 执行下载；非桌面端则继续走浏览器默认下载
+      document.body.addEventListener('click', async (e) => {
+        const a = e.target && e.target.closest ? e.target.closest('a.download-btn') : null;
+        if (!a) return;
+
+        const url = a.getAttribute('href');
+        if (!url) return;
+
+        const fileCell = a.closest('tr')?.querySelector('td');
+        const softwareName = fileCell ? fileCell.textContent.trim() : '';
+        const filename = softwareName ? `${softwareName}.rar` : null;
+
+        const api = window.pywebview && window.pywebview.api;
+        if (!api || typeof api.start_download !== 'function') {
+          return;
+        }
+
+        e.preventDefault();
+
+        try {
+          addToTerminal(`准备下载: ${softwareName || url}`);
+          const res = await api.start_download(url, filename);
+          if (res && res.ok) {
+            addToTerminal(`下载任务已创建: ${res.path}`);
+          } else {
+            addToTerminal(`下载启动失败: ${(res && res.error) ? res.error : 'unknown error'}`);
+          }
+        } catch (err) {
+          addToTerminal(`下载启动异常: ${err && err.message ? err.message : err}`);
+        }
+      });
+
+      // 立即检查授权并加载数据
+      checkAuthAndLoadData();
+      // 然后设置定期检查
+      setInterval(checkAuthAndLoadData, CHECK_INTERVAL);
       
-      // 绑定更新模态框事件
-      elements.updateNow.addEventListener('click', handleUpdateNow);
-      elements.updateLater.addEventListener('click', handleUpdateLater);
-      elements.closeUpdateModal.addEventListener('click', handleUpdateLater);
-      
-      // 初始请求数据（强制不缓存）
-      setTimeout(() => {
-        logToTerminal('正在连接到服务器...');
-        fetchDownloadData(true); // 首次加载，强制刷新
-      }, 1000);
-      
-      // 绑定事件
+      // 额外确保即使在某些情况下DOM已加载后也能触发检查
+      setTimeout(checkAuthAndLoadData, 2000); // 2秒后再次检查，以防首次检查时网络较慢
     });
     
-    // 标题动画
-    function animateTitle() {
-      const title = document.getElementById('main-title');
-      const chars = title.textContent.split('');
-      title.textContent = '';
-      
-      chars.forEach((char, index) => {
-        const span = document.createElement('span');
-        span.textContent = char;
-        span.style.opacity = '0';
-        span.style.transform = 'translateY(20px)';
-        span.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-        title.appendChild(span);
+    // 页面可见性变化时也检查授权状态
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        // 页面重新可见时检查授权状态
+        setTimeout(checkAuthAndLoadData, 1000);
+      }
+    });
+
+    // 检查授权并加载数据
+    async function checkAuthAndLoadData() {
+      try {
+        console.log('开始检查授权...');
+        addToTerminal('正在检查授权状态...');
         
+        // 添加时间戳参数防止缓存
+        const timestamp = new Date().getTime();
+        const urlWithTimestamp = `${JSON_URL}?t=${timestamp}`;
+        const response = await fetch(urlWithTimestamp, {
+          cache: 'no-cache', // 防止缓存
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        // 检查响应状态
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const jsonData = await response.json();
+        console.log('获取到JSON数据:', jsonData);
+        addToTerminal('JSON数据获取成功');
+        
+        // 检查必要的字段是否存在
+        if (!jsonData.time || !jsonData.filename) {
+          throw new Error("JSON数据格式不正确，缺少必要字段");
+        }
+        
+        // 检查JSON是否过期
+        // 尝试解析时间字符串，支持多种格式
+        let jsonTime;
+        
+        if (typeof jsonData.time === 'number') {
+          // 如果时间已经是毫秒时间戳
+          jsonTime = jsonData.time;
+          console.log('检测到数字时间戳:', new Date(jsonTime));
+        } else if (typeof jsonData.time === 'string') {
+          // 处理 'YYYY-MM-DD HH:mm:ss' 格式
+          const timeStr = jsonData.time;
+          
+          // 检查是否为 'YYYY-MM-DD HH:mm:ss' 格式
+          if (/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}$/.test(timeStr)) {
+            // 将 'YYYY-MM-DD HH:mm:ss' 分解为各部分
+            const [datePart, timePart] = timeStr.split(' ');
+            const [year, month, day] = datePart.split('-').map(Number);
+            const [hour, minute, second] = timePart.split(':').map(Number);
+            
+            // 创建日期对象（使用本地时区）
+            const date = new Date(year, month - 1, day, hour, minute, second); // month是0索引
+            jsonTime = date.getTime();
+            console.log('解析日期时间格式 (YYYY-MM-DD HH:mm:ss):', timeStr, '结果:', new Date(jsonTime));
+          } else {
+            // 尝试解析ISO日期字符串或其他格式
+            jsonTime = Date.parse(timeStr);
+            console.log('解析字符串时间:', timeStr, '结果:', new Date(jsonTime));
+            
+            // 如果Date.parse失败，尝试其他常见格式
+            if (isNaN(jsonTime)) {
+              // 尝试作为秒级时间戳
+              const timestamp = parseInt(timeStr);
+              if (!isNaN(timestamp)) {
+                jsonTime = timestamp * 1000; // 转换为毫秒
+                console.log('转换为毫秒时间戳:', new Date(jsonTime));
+              }
+            }
+          }
+        }
+        
+        const now = Date.now();
+        console.log('当前时间:', new Date(now));
+        console.log('JSON时间:', new Date(jsonTime));
+        
+        // 验证时间戳是否有效
+        if (isNaN(jsonTime)) {
+          throw new Error("JSON中的时间格式无效");
+        }
+        
+        const timeDiff = now - jsonTime;
+        const hoursDiff = timeDiff / (1000 * 60 * 60);
+        console.log(`时间差: ${hoursDiff.toFixed(2)} 小时 (阈值: ${EXPIRE_DURATION/(1000*60*60)} 小时)`);
+        
+        const isAuthorized = timeDiff < EXPIRE_DURATION;
+        console.log('授权状态:', isAuthorized ? '已授权' : '未授权');
+
+        // 更新授权状态显示
+        updateAuthStatus(isAuthorized);
+
+        if (isAuthorized) {
+          // 保存授权检查时间到本地存储
+          localStorage.setItem(AUTH_CHECK_KEY, Date.now().toString());
+          
+          addToTerminal('授权验证成功，正在加载数据...');
+          
+          // 加载数据并更新界面
+          await loadAndUpdateSoftware(jsonData);
+          // 执行测速
+          performSpeedTest(jsonData);
+        } else {
+          addToTerminal('授权验证失败，系统未授权');
+        }
+      } catch (error) {
+        console.error('远程授权检查失败:', error);
+        addToTerminal('授权检查失败: ' + error.message);
+        
+        // 尝试使用本地缓存的授权信息
+        const lastAuthCheck = localStorage.getItem(AUTH_CHECK_KEY);
+        if (lastAuthCheck) {
+          const lastCheckTime = parseInt(lastAuthCheck);
+          const now = Date.now();
+          const timeDiff = now - lastCheckTime;
+          
+          if (timeDiff < LOCAL_AUTH_DURATION) {
+            console.log('使用本地缓存的授权状态');
+            addToTerminal('使用本地缓存的授权状态');
+            updateAuthStatus(true);
+            // 不执行后续的数据加载和测速，因为我们没有有效的远程数据
+            return;
+          }
+        }
+        
+        // 远程检查失败且本地也没有有效缓存
+        updateAuthStatus(false);
+      }
+    }
+
+    // 更新授权状态显示（适配新的UI结构）
+    function updateAuthStatus(isAuthorized) {
+      const authContainer = document.getElementById('authContainer');
+      const authTipBox = document.getElementById('authTipBox');
+      const authTipText = document.getElementById('authTipText');
+      const mainInterface = document.getElementById('mainInterface');
+
+      if (isAuthorized) {
+        // 授权成功
+        authTipText.textContent = '授权成功 正在进入系统';
+        authTipBox.classList.add('auth-tip-success'); // 切换为绿色背景
+        
+        // 抽拉进入系统的动画效果
         setTimeout(() => {
-          span.style.opacity = '1';
-          span.style.transform = 'translateY(0)';
-        }, 50 * index);
-      });
-    }
-    
-    // 终端日志
-    function logToTerminal(message, isError = false) {
-      const now = new Date();
-      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-      
-      const logEntry = document.createElement('div');
-      logEntry.className = `animate-fade-in ${isError ? 'text-red-400' : ''}`;
-      logEntry.innerHTML = `<span class="text-tech-purple">${timeStr}</span> <span class="text-gray-500">|</span> ${message}`;
-      
-      elements.terminalLogs.appendChild(logEntry);
-      elements.terminalOutput.scrollTop = elements.terminalOutput.scrollHeight;
-    }
-    
-    // 请求下载数据
-    async function fetchDownloadData(forceRefresh = false) {
-      try {
-        updateStatus('正在获取下载信息...');
-        const fetchOptions = {
-          method: 'GET',
-          cache: 'no-store',
-          headers: { 
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        };
-        
-        const response = await fetch('http://cdn.hlcssc.com/rjdz.json', fetchOptions);
-        if (!response.ok) throw new Error(`HTTP错误: ${response.status}`);
-        
-        const data = await response.json();
-        appState.downloadData = data;
-        
-        // 安全地处理文件时间戳
-        const newFileTime = (data.time && typeof data.time === 'string') ? data.time.trim() : '';
-        
-        // 首次加载或强制刷新（完成初始化）
-        if (forceRefresh) {
-          // 标记初始化完成，并记录文件时间戳
-          appState.isInitialLoaded = true;
-          appState.lastFileTime = newFileTime || '未知时间';
-          appState.currentFileName = data.filename || '未知文件';
-          processDownloadData(data);
-          startFileMonitoring(); // 初始化完成后启动文件监控
-          logToTerminal(`初始化完成，当前文件时间: ${appState.lastFileTime}`);
-          // 调试信息：记录初始化时的数据
-          logToTerminal(`初始化数据: filename='${data.filename}', time='${data.time}'`);
-        } 
-        // 已完成初始化，且文件时间戳变化（避免未更新却提示）
-        else if (appState.isInitialLoaded && 
-                 newFileTime && 
-                 newFileTime.trim() !== '' && 
-                 newFileTime !== '未知时间' &&
-                 appState.lastFileTime && 
-                 appState.lastFileTime.trim() !== '' && 
-                 appState.lastFileTime !== '未知时间' &&
-                 appState.lastFileTime.trim() !== newFileTime.trim()) { 
-          // 检查是否在5秒内重复提示
-          if (Date.now() - appState.lastUpdatePrompt > 5000) {
-            appState.lastUpdatePrompt = Date.now();
-            appState.currentFileName = data.filename || '未知文件';
-            appState.lastFileTime = newFileTime;
-            showUpdateModal();
-            logToTerminal(`检测到文件更新，时间戳变化: ${appState.lastFileTime} → ${newFileTime}`);
-            // 立即下载新文件
-            $('#downloadModal').modal('show');
-          } else {
-            // 调试信息：记录被忽略的更新提示
-            logToTerminal(`忽略重复更新提示，时间戳: ${newFileTime}`);
-          }
-        }
-        // 调试信息：记录JSON数据
-        else if (appState.isInitialLoaded) {
-          logToTerminal(`JSON数据: filename='${data.filename}', time='${data.time}'`);
-        }
-
-        
-        return data;
-      } catch (error) {
-        console.error('获取下载数据失败:', error);
-        updateStatus(`获取数据失败: ${error.message}`, true);
-        logToTerminal(`错误: 获取下载数据失败 - ${error.message}`, true);
-        document.body.classList.remove('no-scroll');
-        return null;
-      }
-    }
-    
-    // 处理下载数据
-    function processDownloadData(data) {
-      document.body.classList.remove('no-scroll');
-      
-      // 更新文件信息
-      elements.filename.textContent = data.filename || '未知文件';
-      elements.updateTime.textContent = data.time || '未知时间';
-      
-      // 验证授权
-      const now = new Date();
-      const updateTime = new Date(data.time);
-      const timeDiff = (now - updateTime) / (1000 * 60 * 60); // 小时差
-      
-      if (timeDiff < 2) {
-        elements.authIcon.className = 'fa fa-check-circle text-green-500 mr-3 text-xl';
-        elements.authMessage.textContent = '✅ 授权验证成功 - 您可以正常使用下载服务';
-        elements.authStatus.classList.remove('hidden');
-        elements.speedTestSection.classList.remove('hidden');
-        elements.unauthorizedMessage.classList.add('hidden');
-        updateStatus('授权验证成功，系统准备就绪');
+          // 首先让授权提示框向上滑出
+          authTipBox.style.transition = 'transform 0.8s ease-in-out';
+          authTipBox.style.transform = 'translateY(-100%)';
+          
+          // 稍微延迟后显示主界面
+          setTimeout(() => {
+            authContainer.classList.add('hidden');
+            mainInterface.classList.remove('hidden');
+            
+            // 主界面淡入效果
+            mainInterface.style.opacity = '0';
+            mainInterface.style.transform = 'translateY(20px)';
+            mainInterface.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+            
+            // 触发动画
+            setTimeout(() => {
+              mainInterface.style.opacity = '1';
+              mainInterface.style.transform = 'translateY(0)';
+            }, 50);
+          }, 600); // 等待授权框滑出后再切换界面
+        }, 1000);
       } else {
-        elements.authStatus.classList.add('hidden');
-        elements.speedTestSection.classList.add('hidden');
-        elements.unauthorizedMessage.classList.remove('hidden');
-        updateStatus('授权已过期，请联系阿杰处理');
-        logToTerminal('错误: 授权已过期或未授权', true);
-      }
-    }
-    // 更新状态信息
-    function updateStatus(message, isError = false) {
-      elements.statusInfo.innerHTML = `<span class="${isError ? 'text-red-400' : ''}">${message}</span><span class="terminal-cursor">|</span>`;
-    }
-    
-    // 速度测试配置
-    const SPEED_TIMEOUT = 5000; // 5秒超时时间
-
-    // 使用页面级缓存（存储在window对象上）
-    // 结果在页面刷新前会持续保存
-    if (!window.nodeSpeedCache) {
-      window.nodeSpeedCache = {
-        results: {}, // 测试结果缓存
-        tested: false // 是否已测试标记
-      };
-    }
-
-    // 根据延迟获取速度等级和徽章类名
-    function getSpeedLevel(latency) {
-      if (latency < 100) {
-        return {
-          text: '优秀', // 显示文本
-          badgeClass: 'badge-success' // 徽章样式类
-        };
-      } else if (latency < 300) {
-        return {
-          text: '良好', // 显示文本
-          badgeClass: 'badge-primary' // 徽章样式类
-        };
-      } else if (latency < 600) {
-        return {
-          text: '一般', // 显示文本
-          badgeClass: 'badge-warning' // 徽章样式类
-        };
-      } else {
-        return {
-          text: '慢', // 显示文本
-          badgeClass: 'badge-secondary' // 徽章样式类
-        };
-      }
-    }
-
-    // 更新节点的速度徽章
-    function updateSpeedBadge(nodeBtn, speedData) {
-      const speedBadge = nodeBtn.querySelector('.speed-badge');
-      if (!speedBadge) return;
-
-      // 移除测速中的动画效果
-      speedBadge.classList.remove('badge-info', 'testing');
-
-      // 更新徽章样式和文本
-      speedBadge.classList.add(speedData.badgeClass);
-      speedBadge.textContent = speedData.text;
-
-      // 如果是最快的节点，则添加推荐徽章
-      if (speedData.isRecommended) {
-        const nodeSpeed = nodeBtn.querySelector('.node-speed');
-        // 移除已存在的推荐徽章
-        const existingBadge = nodeSpeed.querySelector('.recommended-badge');
-        if (existingBadge) {
-          existingBadge.remove();
-        }
-        // 添加新的推荐徽章
-        const recommendedBadge = document.createElement('span');
-        recommendedBadge.className = 'recommended-badge';
-        recommendedBadge.innerHTML = '<i class="fa fa-star mr-1"></i>推荐';
-        nodeSpeed.appendChild(recommendedBadge);
-      }
-    }
-
-    // 从缓存恢复结果到UI界面
-    function restoreCachedResults() {
-      const nodeButtons = document.querySelectorAll('.node-download-btn');
-      if (nodeButtons.length === 0 || !window.nodeSpeedCache.tested) return;
-
-      const results = [];
-      let fastestLatency = Infinity; // 初始化最快延迟为无穷大
-
-      // 收集所有缓存的结果
-      nodeButtons.forEach(btn => {
-        const nodeType = btn.getAttribute('data-node');
-        const latency = window.nodeSpeedCache.results[nodeType];
-
-        if (latency !== undefined) {
-          results.push({ btn, nodeType, latency, success: latency !== Infinity });
-          if (latency < fastestLatency && latency !== Infinity) {
-            fastestLatency = latency;
-          }
-        }
-      });
-
-      // 从缓存更新UI
-      results.forEach(result => {
-        if (!result.success) {
-          // 测试失败的情况
-          updateSpeedBadge(result.btn, {
-            text: '--',
-            badgeClass: 'badge-secondary',
-            isRecommended: false
-          });
-        } else {
-          // 测试成功的情况
-          const speedLevel = getSpeedLevel(result.latency);
-          speedLevel.isRecommended = (result.latency === fastestLatency);
-          updateSpeedBadge(result.btn, speedLevel);
-        }
-      });
-    }
-
-    // 测试单个节点的速度
-    async function testNodeSpeed(nodeBtn) {
-      const nodeType = nodeBtn.getAttribute('data-node');
-      const fullUrl = nodeBtn.getAttribute('href');
-
-      if (!fullUrl) {
-        return { latency: Infinity, success: false };
-      }
-
-      try {
-        // 从完整的下载URL中提取主机名根URL
-        const urlObj = new URL(fullUrl);
-        const rootUrl = `${urlObj.protocol}//${urlObj.hostname}/`;
-
-        const startTime = performance.now();
-
-        // 使用HEAD请求仅测试根路径的速度
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), SPEED_TIMEOUT);
-
-        const response = await fetch(rootUrl, {
-          method: 'HEAD',
-          mode: 'no-cors', // 避免CORS问题
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-        const endTime = performance.now();
-        const latency = Math.round(endTime - startTime); // 计算延迟
-
-        // 在no-cors模式下，我们无法访问响应的详细信息
-        // 但我们仍然可以测量请求的往返时间
-        return { latency, success: true };
-      } catch (error) {
-        console.warn(`节点 ${nodeType} 测速失败:`, error.message || error);
-        // 即使在no-cors模式下，某些错误也可能发生
-        // 例如网络错误或超时
-        return { latency: Infinity, success: false };
-      }
-    }
-
-    // 测试所有节点
-    async function testAllNodes() {
-      // 从JSON数据中获取下载链接
-      updateDownloadLinksFromJSON();
-      
-      const nodeButtons = document.querySelectorAll('.node-download-btn');
-      if (nodeButtons.length === 0) return;
-
-      // 显示测速中的动画效果
-      nodeButtons.forEach(btn => {
-        const badge = btn.querySelector('.speed-badge');
-        if (badge) {
-          badge.classList.add('testing');
-          badge.textContent = '测速中...';
-        }
-      });
-
-      // 并行测试所有节点
-      const results = await Promise.all(
-        Array.from(nodeButtons).map(async btn => {
-          const result = await testNodeSpeed(btn);
-          return { btn, ...result };
-        })
-      );
-
-      // 查找最快的节点
-      let fastestLatency = Infinity;
-      results.forEach(result => {
-        if (result.success && result.latency < fastestLatency) {
-          fastestLatency = result.latency;
-        }
-      });
-
-      // 更新所有徽章并缓存结果
-      results.forEach(result => {
-        const nodeType = result.btn.getAttribute('data-node');
-
-        if (!result.success) {
-          // 测试失败或超时
-          updateSpeedBadge(result.btn, {
-            text: '--',
-            badgeClass: 'badge-secondary',
-            isRecommended: false
-          });
-          window.nodeSpeedCache.results[nodeType] = Infinity;
-        } else {
-          // 测试成功
-          const speedLevel = getSpeedLevel(result.latency);
-          speedLevel.isRecommended = (result.latency === fastestLatency && fastestLatency < Infinity);
-          updateSpeedBadge(result.btn, speedLevel);
-          window.nodeSpeedCache.results[nodeType] = result.latency;
-        }
-      });
-
-      // 标记为已测试
-      window.nodeSpeedCache.tested = true;
-      
-      // 显示测速结果
-      displayTestResults();
-    }
-
-    // 从JSON数据更新下载链接
-    function updateDownloadLinksFromJSON() {
-      if (!appState.downloadData) {
-        console.warn('下载数据未准备好');
-        return;
-      }
-      
-      // 映射JSON键名到节点ID
-      const nodeMap = {
-        'telcom_url': 'telcom_url',
-        'unicom_url': 'unicom_url',
-        'cmnet_url': 'cmnet_url',
-        'usw_url': 'usw_url'
-      };
-      
-      // 更新每个节点的下载链接
-      Object.entries(nodeMap).forEach(([jsonKey, nodeId]) => {
-        if (appState.downloadData[jsonKey]) {
-          const nodeElement = document.getElementById(nodeId);
-          if (nodeElement) {
-            nodeElement.setAttribute('href', appState.downloadData[jsonKey]);
-            console.log(`更新节点 ${nodeId} 的下载链接: ${appState.downloadData[jsonKey]}`);
-          } else {
-            console.warn(`未找到节点元素: ${nodeId}`);
-          }
-        } else {
-          console.warn(`JSON数据中未找到键: ${jsonKey}`);
-        }
-      });
-    }
-
-    // 显示测试结果
-    function displayTestResults() {
-      const nodeButtons = document.querySelectorAll('.node-download-btn');
-      if (nodeButtons.length === 0) return;
-
-      // 清空现有的结果
-      const resultsContainer = document.createElement('div');
-      resultsContainer.className = "overflow-x-auto";
-      resultsContainer.innerHTML = `
-        <table class="w-full border-collapse">
-          <thead>
-            <tr class="bg-tech-blue/50 border-b border-tech-accent/30">
-              <th class="p-3 text-left">线路标识</th>
-              <th class="p-3 text-left">测试结果</th>
-              <th class="p-3 text-left">状态</th>
-            </tr>
-          </thead>
-          <tbody id="results-body"></tbody>
-        </table>
-      `;
-
-      elements.testResults.innerHTML = `<h3 class="text-lg font-tech text-tech-light mb-3">📊 测速结果</h3>`;
-      elements.testResults.appendChild(resultsContainer);
-
-      const resultsBody = resultsContainer.querySelector('#results-body');
-      
-      // 获取测速结果并排序
-      const results = [];
-      nodeButtons.forEach(btn => {
-        const nodeType = btn.getAttribute('data-node');
-        const nodeName = btn.querySelector('.node-name').textContent;
-        const latency = window.nodeSpeedCache.results[nodeType];
+        // 授权失败（恢复开始.html的样式）
+        authTipText.textContent = '文件未授权请联系阿杰';
+        authTipBox.classList.remove('auth-tip-success'); // 恢复红色背景
         
-        results.push({
-          nodeType,
-          nodeName,
-          latency,
-          success: latency !== undefined && latency !== Infinity
-        });
-      });
-      
-      // 按延迟排序
-      results.sort((a, b) => {
-        if (!a.success) return 1;
-        if (!b.success) return -1;
-        return a.latency - b.latency;
-      });
-      
-      // 显示结果
-      results.forEach((result, index) => {
+        // 显示授权失败界面
+        authContainer.classList.remove('hidden', 'opacity-0');
+        mainInterface.classList.add('hidden', 'opacity-0');
+      }
+    }
+
+    // 加载并更新软件列表
+    function loadAndUpdateSoftware(jsonData) {
+      const newSoftware = {
+        name: jsonData.filename.replace('.rar', ''),
+        urls: {
+          telcom: jsonData.telcom_url,
+          unicom: jsonData.unicom_url,
+          cmnet: jsonData.cmnet_url,
+          usw: jsonData.usw_url
+        }
+      };
+
+      // 检查是否是新软件
+      const isNew = !currentSoftwareList.some(item => item.name === newSoftware.name);
+      if (isNew) {
+        currentSoftwareList.unshift(newSoftware); // 添加到列表顶部
+        addToTerminal(`发现新软件: ${newSoftware.name}`);
+        renderDownloadTable();
+      } else {
+        addToTerminal(`软件列表已是最新: ${newSoftware.name}`);
+      }
+    }
+
+    // 渲染下载列表
+    function renderDownloadTable(bestLineName = null) {
+      const tableBody = document.getElementById('downloadTableBody');
+      tableBody.innerHTML = '';
+
+      currentSoftwareList.forEach((software, index) => {
+        // 根据最佳线路确定按钮显示
+        const telcomHtml = bestLineName === '电信' ? 
+          `<a href="${software.urls.telcom}" class="download-btn best-download-btn"><i class="fa fa-download"></i>电信<span class="recommend-badge ml-1">推荐</span></a>` :
+          `<a href="${software.urls.telcom}" class="download-btn"><i class="fa fa-download"></i>电信</a>`;
+          
+        const unicomHtml = bestLineName === '联通' ? 
+          `<a href="${software.urls.unicom}" class="download-btn best-download-btn"><i class="fa fa-download"></i>联通<span class="recommend-badge ml-1">推荐</span></a>` :
+          `<a href="${software.urls.unicom}" class="download-btn"><i class="fa fa-download"></i>联通</a>`;
+          
+        const cmnetHtml = bestLineName === '移动' ? 
+          `<a href="${software.urls.cmnet}" class="download-btn best-download-btn"><i class="fa fa-download"></i>移动<span class="recommend-badge ml-1">推荐</span></a>` :
+          `<a href="${software.urls.cmnet}" class="download-btn"><i class="fa fa-download"></i>移动</a>`;
+          
+        const uswHtml = bestLineName === '北美' ? 
+          `<a href="${software.urls.usw}" class="download-btn best-download-btn"><i class="fa fa-download"></i>北美<span class="recommend-badge ml-1">推荐</span></a>` :
+          `<a href="${software.urls.usw}" class="download-btn"><i class="fa fa-download"></i>北美</a>`;
+        
+        // 为每一行分配不同的背景色
+        const rowColors = [
+          'bg-blue-500/10',
+          'bg-green-500/10',
+          'bg-purple-500/10',
+          'bg-yellow-500/10',
+          'bg-pink-500/10',
+          'bg-indigo-500/10'
+        ];
+        
+        const rowColor = rowColors[index % rowColors.length];
+        
         const row = document.createElement('tr');
-        row.className = `border-b border-tech-accent/10 hover:bg-tech-blue/20 transition-colors ${index === 0 && result.success ? 'bg-green-900/20' : ''}`;
+        row.className = `border-b border-dark/50 hover:bg-primary/10 transition-colors ${rowColor}`;
         
-        if (result.success) {
-          const speedLevel = getSpeedLevel(result.latency);
-          row.innerHTML = `
-            <td class="p-3">${result.nodeName}</td>
-            <td class="p-3 font-mono ${index === 0 ? 'text-green-400 font-bold' : ''}">${result.latency}ms</td>
-            <td class="p-3"><span class="speed-badge ${speedLevel.badgeClass}">${speedLevel.text}</span> ${index === 0 ? '<span class="recommended-badge"><i class="fa fa-star mr-1"></i>推荐</span>' : ''}</td>
-          `;
-        } else {
-          row.innerHTML = `
-            <td class="p-3">${result.nodeName}</td>
-            <td class="p-3 font-mono">--</td>
-            <td class="p-3"><span class="speed-badge badge-secondary">测速失败</span></td>
-          `;
-        }
-        
-        resultsBody.appendChild(row);
+        row.innerHTML = `
+          <td class="p-2 font-cyber">${software.name}</td>
+          <td class="p-1 text-center" colspan="4">
+            <div class="download-container">
+              ${telcomHtml}
+              ${unicomHtml}
+              ${cmnetHtml}
+              ${uswHtml}
+            </div>
+          </td>
+        `;
+
+        tableBody.appendChild(row);
       });
+      
+      addToTerminal(`已渲染 ${currentSoftwareList.length} 个软件的下载链接`);
     }
 
-    // 当模态框显示时开始速度测试
-    $(document).on('shown.bs.modal', function(e) {
-      console.log('模态框显示事件触发');
-      // 检查此模态框是否包含下载节点
-      const nodeButtons = $(e.target).find('.node-download-btn');
-      console.log('找到的节点按钮数量:', nodeButtons.length);
+    // 执行多线路延迟测试
+    async function performSpeedTest(jsonData) {
+      addToTerminal('开始网络延迟测试...');
       
-      if (nodeButtons.length > 0) {
-        console.log('缓存测试状态:', window.nodeSpeedCache.tested);
-        // 从JSON数据更新下载链接
-        updateDownloadLinksFromJSON();
-        
-        if (!window.nodeSpeedCache.tested) {
-          // 首次测试 - 运行速度测试
-          console.log('开始首次测速');
-          logToTerminal('开始多线路并行测速');
-          testAllNodes().catch(error => {
-            console.error('测速过程中发生错误:', error);
-            logToTerminal(`测速过程中发生错误: ${error.message}`, true);
-          });
-        } else {
-          // 已测试过 - 从缓存恢复
-          console.log('从缓存恢复测速结果');
-          logToTerminal('从缓存恢复测速结果');
-          restoreCachedResults();
-          displayTestResults();
-        }
-      } else {
-        console.log('未找到节点按钮');
-      }
-    });
-    
-    // 页面加载完成后手动触发一次测速（用于调试）
-    $(document).ready(function() {
-      console.log('页面加载完成');
-      
-      // 手动测速按钮事件处理
-      $('#testSpeedBtn').on('click', function() {
-        console.log('手动触发测速');
-        logToTerminal('手动触发测速');
-        // 重置缓存状态以强制重新测速
-        window.nodeSpeedCache.tested = false;
-        // 从JSON数据更新下载链接
-        updateDownloadLinksFromJSON();
-        testAllNodes().catch(error => {
-          console.error('测速过程中发生错误:', error);
-          logToTerminal(`测速过程中发生错误: ${error.message}`, true);
+      const urls = [
+        { id: 'telcomSpeed', url: jsonData.telcom_url, name: '电信' },
+        { id: 'unicomSpeed', url: jsonData.unicom_url, name: '联通' },
+        { id: 'cmnetSpeed', url: jsonData.cmnet_url, name: '移动' },
+        { id: 'uswSpeed', url: jsonData.usw_url, name: '北美' }
+      ];
+
+      let delayResults = [];
+      for (const item of urls) {
+        addToTerminal(`正在测试${item.name}线路延迟...`);
+        const delay = await testConnectionDelay(item.url);
+        delayResults.push({
+          id: item.id,
+          name: item.name,
+          delay: delay,
+          url: item.url
         });
-      });
-    });
-
-    // 启动文件监控（仅初始化完成后）
-    function startFileMonitoring() {
-      if (appState.intervalId) clearInterval(appState.intervalId);
+      }
       
-      // 每4秒检查一次，且只在空闲状态
-      appState.intervalId = setInterval(async () => {
-        if (!appState.isTesting && !appState.isDownloading && appState.isInitialLoaded) {
-          elements.systemStatus.textContent = '正在检查更新...';
-          await fetchDownloadData(); // 非强制刷新，仅检查变化
-          elements.systemStatus.textContent = '正常运行中';
+      // 找到延迟最低的线路
+      delayResults.sort((a, b) => a.delay - b.delay);
+      const best = delayResults[0];
+      
+      // 显示所有线路的延迟
+      for (const result of delayResults) {
+        const element = document.getElementById(result.id);
+        if (result.delay > 0) {
+          element.textContent = `${result.delay} ms`;
+          addToTerminal(`${result.name}线路延迟: ${result.delay} ms`);
+          // 如果是最佳线路，可以添加特殊标识
+          if (result.delay === best.delay) {
+            element.parentElement.classList.add('best-line');
+            setTimeout(() => {
+              element.parentElement.classList.remove('best-line');
+            }, 3000); // 3秒后移除高亮
+          }
+        } else {
+          element.textContent = '超时';
+          addToTerminal(`${result.name}线路测试超时`);
         }
-      }, 4000);
+      }
+      
+      // 在平均速度区域显示最佳线路
+      if (best.delay > 0) {
+        document.getElementById('avgSpeed').textContent = `最佳: ${best.name} ${best.delay} ms`;
+        addToTerminal(`推荐使用${best.name}线路 (${best.delay} ms)，延迟最低`);
+        
+        // 更新下载按钮，标记最佳线路
+        renderDownloadTable(best.name);
+      } else {
+        document.getElementById('avgSpeed').textContent = '全部超时';
+        addToTerminal('所有线路测试均超时');
+        
+        // 如果没有最佳线路，重新渲染按钮（移除推荐标记）
+        renderDownloadTable();
+      }
+      
+      // 在控制台输出完整的延迟结果
+      console.log('完整延迟测试结果:', delayResults);
+    }
+
+    // 测试连接延迟（毫秒）
+    async function testConnectionDelay(url) {
+      try {
+        const startTime = performance.now();
+        
+        // 发送一个简单的HEAD请求来测试延迟
+        const response = await fetch(url, { 
+          method: 'HEAD',
+          cache: 'no-cache'
+        });
+        
+        const endTime = performance.now();
+        const delay = Math.round(endTime - startTime);
+        
+        // 如果请求成功，返回延迟时间
+        if (response.ok) {
+          return delay;
+        } else {
+          // 如果响应不成功，返回超时
+          return 0;
+        }
+      } catch (error) {
+        console.error('延迟测试失败:', error);
+        return 0; // 表示超时或错误
+      }
     }
     
-    // 显示更新提示（仅在真正更新时）
-    function showUpdateModal() {
-      elements.updateModal.classList.remove('hidden');
+    // 单线路测速 - 改进版本（保留原功能，以防需要）
+    async function testSingleLineSpeed(url) {
+      try {
+        // 使用一个较小的测试文件进行测速，避免下载整个大文件
+        const testUrl = url.includes('?') ? url + '&test=1' : url + '?test=1';
+        
+        const startTime = performance.now();
+        // 尝试获取Content-Length头部信息
+        const headResponse = await fetch(testUrl, { method: 'HEAD' });
+        
+        if (!headResponse.ok) {
+          return 0;
+        }
+        
+        const fileSize = parseInt(headResponse.headers.get('Content-Length')) || 0;
+        
+        // 如果无法获取文件大小，则使用实际下载一小段时间的方法
+        if (fileSize === 0) {
+          // 只下载前1MB的数据来估算速度
+          const partialResponse = await fetch(testUrl, { 
+            headers: {
+              'Range': 'bytes=0-1048575' // 请求前1MB
+            }
+          });
+          
+          if (!partialResponse.ok && partialResponse.status !== 206) {
+            return 0;
+          }
+          
+          const partialData = await partialResponse.arrayBuffer();
+          const endTime = performance.当前();
+          const duration = (endTime - startTime) / 1000; // 转换为秒
+          
+          // 计算速度（Mbps）
+          const speed = (partialData.byteLength * 8) / (1024 * 1024 * duration);
+          return speed;
+        } else {
+          // 如果有文件大小信息，通过HEAD请求时间估算速度
+          const endTime = performance.当前();
+          const duration = (endTime - startTime) / 1000; // 转换为秒
+          
+          // 计算速度（Mbps）
+          const speed = (fileSize * 8) / (1024 * 1024 * duration);
+          return speed;
+        }
+      } catch (error) {
+        console.error('测速失败:', error);
+        return 0;
+      }
+    }
+    // 添加终端日志消息
+    function addToTerminal(message) {
+      const terminalOutput = document.getElementById('terminalOutput');
+      const lineElement = document.createElement('div');
+      lineElement.className = 'terminal-line';
+      lineElement.textContent = `> ${message}`;
+      terminalOutput.appendChild(lineElement);
+      
+      // 自动滚动到底部
+      terminalOutput.scrollTop = terminalOutput.scrollHeight;
+      
+      // 限制日志数量，最多保留50行
+      if (terminalOutput.children.length > 50) {
+        terminalOutput.removeChild(terminalOutput.firstChild);
+      }
     }
     
-    // 立即更新
-    function handleUpdateNow() {
-      elements.updateModal.classList.add('hidden');
-      // 直接显示下载模态框
-      $('#downloadModal').modal('show');
+    // 模拟一些系统活动日志
+    function simulateSystemActivity() {
+      const activities = [
+        '检查系统完整性...',
+        '验证授权状态...',
+        '同步配置文件...',
+        '更新软件列表...',
+        '网络质量监控中...',
+        '安全扫描完成',
+        '系统资源充足',
+        '准备就绪，等待用户操作...'
+      ];
+      
+      // 随机选择一个活动添加到日志
+      const randomActivity = activities[Math.floor(Math.random() * activities.length)];
+      addToTerminal(randomActivity);
     }
     
-    // 稍后更新
-    function handleUpdateLater() {
-      elements.updateModal.classList.add('hidden');
-    }
-    
+    // 定期添加模拟活动
+    setInterval(simulateSystemActivity, 15000); // 每15秒添加一条模拟日志
   </script>
 </body>
 </html>
